@@ -38,11 +38,11 @@ https_client: mbedtls_make $(OBJS)
 	@echo Compiling: $< ....
 	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 
-clean:
+clean: 
 	rm -f https_client *.o
 
 mbedtls_clean:
 	@for dir in $(MBEDTLS); do \
 		$(MAKE) -C $$dir clean; \
 		if [ $$? != 0 ]; then exit 1; fi; \
-	done1
+	done

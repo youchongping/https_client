@@ -2,12 +2,16 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iconv.h>
+
 
 extern const char *taoao_root_cert;
 
 
 struct ssl_conn s;
 struct host_info host;
+int u2g(char *inbuf, size_t inlen, char *outbuf, size_t outlen) ;
+int g2u(char *inbuf, size_t inlen, char *outbuf, size_t outlen) ;
 
 void parse_url(char* url,struct host_info* host)
 {
@@ -261,6 +265,27 @@ int ssl_write(struct ssl_conn* s,char* buf,int len)
     printf( " %d bytes written\n\n%s", len, (char *) buf );
     return 0;
 }
+char content_buf[256];
+char utf8_content_buf[512];
+
+void parse_content(char* in_buf,int len)
+{   
+   static char content;
+   char* ptr = NULL;
+
+   memset(content_buf,0,sizeof(content_buf));
+   ptr = strstr(in_buf,"\r\n\r\n");
+   if( ptr != NULL)
+    {
+        content = 1;
+        ptr += strlen("\r\n\r\n");
+        strcat(content_buf,ptr);
+        g2u(content_buf,strlen(content_buf),utf8_content_buf,sizeof(utf8_content_buf));
+        printf("    GBK->UTF-8:\n%s\n",utf8_content_buf);
+        return;
+    }
+   
+}
 
 void ssl_read(struct ssl_conn* s)
 {
@@ -293,11 +318,13 @@ void ssl_read(struct ssl_conn* s)
         if( ret == 0 )
         {
             printf( "\n\nEOF\n\n" );
+            
             break;
         }
 
         len = ret;
-        printf( " %d bytes read\n\n%s", len, (char *) buf );
+        printf( " %d bytes read\n\n", len);
+        parse_content((char*)buf,len);
     }
     while( 1 );
 }
@@ -329,3 +356,31 @@ int main(int argc,char** argv)
     return 0;
     
 }
+int code_convert(char *from_charset, char *to_charset, char *inbuf, size_t inlen,  
+        char *outbuf, size_t outlen) {  
+    iconv_t cd;  
+    char **pin = &inbuf;  
+    char **pout = &outbuf;  
+  
+    cd = iconv_open(to_charset, from_charset);  
+    if (cd == 0)  
+        return -1;  
+    memset(outbuf, 0, outlen);  
+    if (iconv(cd, pin, &inlen, pout, &outlen) == -1)  
+        return -1;  
+    iconv_close(cd);  
+    *pout = '\0';  
+  
+    return 0;  
+}  
+  
+int u2g(char *inbuf, size_t inlen, char *outbuf, size_t outlen) 
+{  
+    return code_convert("utf-8", "gb2312", inbuf, inlen, outbuf, outlen);  
+}  
+  
+int g2u(char *inbuf, size_t inlen, char *outbuf, size_t outlen) 
+{  
+    return code_convert("gb2312", "utf-8", inbuf, inlen, outbuf, outlen);  
+}
+
