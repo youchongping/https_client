@@ -353,6 +353,8 @@ int main(int argc,char** argv)
     ssl_write(s,buf,len);
     ssl_read(s);
     ssl_destroy(s);
+    free(s);
+    
     return 0;
     
 }

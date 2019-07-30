@@ -20,7 +20,7 @@ SOURCES = https_client.c ca_cert.c
 OBJS = $(SOURCES:.c=.o)
 
 .SUFFIXES:.c .o
-
+.SILENT:
 all: https_client
 
 mbedtls_make:
@@ -30,16 +30,16 @@ mbedtls_make:
 	done
 
 https_client: mbedtls_make $(OBJS)
-	@echo Linking: $@ ....
+	@echo   Linking...   $@
 	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
 #	$(STRIP) -s $@
 
 .c.o:
-	@echo Compiling: $< ....
+	@echo   CC    $<
 	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 
 clean: 
-	rm -f https_client *.o
+	rm -rf https_client $(CURDIR)/*.o $(CURDIR)/all $(CURDIR)*~ 
 
 mbedtls_clean:
 	@for dir in $(MBEDTLS); do \
